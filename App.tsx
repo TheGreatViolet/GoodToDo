@@ -1,7 +1,11 @@
-import { NavigationContainer, RouteProp, TypedNavigator } from '@react-navigation/native';
+import { AntDesign } from '@expo/vector-icons';
+import { NavigationContainer, RouteProp } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Box, extendTheme, Flex, Text, NativeBaseProvider, VStack, Heading, HStack, Checkbox, Card, StatusBar } from 'native-base';
-import React, { createContext, useState } from 'react';
+import {
+  AlertDialog, Box, Center, extendTheme, Flex, Heading, HStack,
+  IconButton, Input, NativeBaseProvider, Spacer, StatusBar, VStack, Button
+} from 'native-base';
+import React, { useState } from 'react';
 import { NavigationScreenProp } from 'react-navigation';
 
 const Themes = {
@@ -112,6 +116,28 @@ const ListOfList = (props: navprop) => {
     }]
   }]);
 
+  const [isopen, setopen] = useState<boolean>(false);
+  const cancelAdd = () => {
+    setopen(false);
+    setListNameVal('');
+  };
+  const onClose = () => {
+    setopen(false);
+    addList();
+  }
+
+  const cancelRef = React.useRef(null);
+
+  const [listNameValue, setListNameVal] = useState<string>('');
+  const handleChange = (text: any) => setListNameVal(text);
+
+  function addList() {
+    if (listNameValue.length > 0) {
+      setlists([...listoflists, { name: listNameValue, items: [] }]);
+      setListNameVal('');
+    }
+  }
+
   const navigation = props.navigation
 
   return (
@@ -121,9 +147,17 @@ const ListOfList = (props: navprop) => {
           <Box w="full" h="24" bg="background.100"
             borderColor="background.300" borderBottomWidth="2"
             alignContent="flex-start">
-            <VStack >
+            <VStack>
               <Box w="full" h="10" bg="background.100" />
-              <Heading size="3xl" marginLeft="4">Lists</Heading>
+              <HStack>
+              </HStack>
+
+              <Flex flexDirection="row">
+                <Heading size="3xl" marginLeft="4">Lists</Heading>
+                <Spacer />
+                <IconButton icon={<AntDesign name="plus" size={36} color="gray" />} marginRight="2" marginTop="2"
+                  onPress={() => { setopen(true) }} />
+              </Flex>
             </VStack>
           </Box>
 
@@ -148,6 +182,22 @@ const ListOfList = (props: navprop) => {
             </VStack>
           </Box>
         </Flex>
+
+        <Center>
+          <AlertDialog isOpen={isopen} leastDestructiveRef={cancelRef} onClose={cancelAdd}>
+            <AlertDialog.Content>
+              <AlertDialog.CloseButton />
+              <AlertDialog.Header>Create List</AlertDialog.Header>
+              <AlertDialog.Body>
+                Enter list name:
+                <Input value={listNameValue} onChangeText={handleChange} placeholder="List Name" />
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button onPress={onClose}>Add</Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog>
+        </Center>
       </NativeBaseProvider>
     </>
   )
