@@ -1,4 +1,4 @@
-import { NavigationContainer, TypedNavigator } from '@react-navigation/native';
+import { NavigationContainer, RouteProp, TypedNavigator } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Box, extendTheme, Flex, Text, NativeBaseProvider, VStack, Heading, HStack, Checkbox, Card, StatusBar } from 'native-base';
 import React, { createContext, useState } from 'react';
@@ -60,17 +60,38 @@ declare module 'native-base' {
 
 interface navprop {
   navigation: NavigationScreenProp<any, any>;
+  route: RouteProp<{ params: { list: any[], title: string } }>;
 }
 
-interface listprops {
-  title: string;
-  items: object[];
-}
-
-const ListView = (props: (listprops & navprop)) => {
+const ListView = (props: navprop) => {
   return (
     <NativeBaseProvider theme={selectedTheme}>
+      <Flex flexDirection="column">
+        <Box w="full" h="24" bg="background.100"
+          borderColor="background.300" borderBottomWidth="2"
+          alignContent="flex-start">
+          <VStack >
+            <Box w="full" h="10" bg="background.100" />
+            <Heading size="3xl" marginLeft="4">{props.route.params.title}</Heading>
+          </VStack>
+        </Box>
 
+        <Box w="full" h="full" bg="background.200"
+          alignContent="flex-start" paddingX="4" marginTop="2">
+          <VStack space="2">
+            {props.route.params.list.map((list, index) => {
+              return (
+                <HStack key={index}>
+                  <Box w="full" h="8" bg="background.100" alignContent="flex-start"
+                    paddingLeft="2" rounded="lg" marginY="2">
+                    <Heading>{list.name}</Heading>
+                  </Box>
+                </HStack>
+              )
+            })}
+          </VStack>
+        </Box>
+      </Flex>
     </NativeBaseProvider>
   )
 }
@@ -112,7 +133,10 @@ const ListOfList = (props: navprop) => {
               {listoflists.map((list: any, key: any) => {
                 return (
                   <HStack key={key} onTouchEnd={() => {
-                    navigation.navigate('ListView');
+                    navigation.navigate('ListView', {
+                      list: list.items,
+                      title: list.name
+                    });
                   }}>
                     <Box w="full" h="8" bg="background.100" alignContent="flex-start"
                       paddingLeft="2" rounded="lg" marginY="2">
