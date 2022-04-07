@@ -68,6 +68,32 @@ interface navprop {
 }
 
 const ListView = (props: navprop) => {
+  const [itemlist, setItemList] = useState(props.route.params.list);
+  const [itemname, setItemName] = useState('');
+
+  const [isopen, setopen] = useState<boolean>(false);
+
+  const cancelAdd = () => {
+    setopen(false);
+    setItemName('');
+  };
+  const onClose = () => {
+    setopen(false);
+    addItem();
+  }
+
+  const cancelRef = React.useRef(null);
+
+  function addItem() {
+    if (itemname.length > 0) {
+      setItemList([...itemlist, {
+        name: itemname,
+        checked: false
+      }]);
+      setItemName('');
+    }
+  }
+
   return (
     <NativeBaseProvider theme={selectedTheme}>
       <Flex flexDirection="column">
@@ -76,14 +102,19 @@ const ListView = (props: navprop) => {
           alignContent="flex-start">
           <VStack >
             <Box w="full" h="10" bg="background.100" />
-            <Heading size="3xl" marginLeft="4">{props.route.params.title}</Heading>
+            <Flex flexDirection="row">
+              <Heading size="3xl" marginLeft="4">Lists</Heading>
+              <Spacer />
+              <IconButton icon={<AntDesign name="plus" size={36} color="gray" />} marginRight="2" marginTop="2"
+                onPress={() => { setopen(true) }} />
+            </Flex>
           </VStack>
         </Box>
 
         <Box w="full" h="full" bg="background.200"
           alignContent="flex-start" paddingX="4" marginTop="2">
           <VStack space="2">
-            {props.route.params.list.map((list, index) => {
+            {itemlist.map((list, index) => {
               return (
                 <HStack key={index}>
                   <Box w="full" h="8" bg="background.100" alignContent="flex-start"
@@ -96,6 +127,22 @@ const ListView = (props: navprop) => {
           </VStack>
         </Box>
       </Flex>
+
+      <Center>
+        <AlertDialog isOpen={isopen} leastDestructiveRef={cancelRef} onClose={cancelAdd}>
+          <AlertDialog.Content>
+            <AlertDialog.CloseButton />
+            <AlertDialog.Header>Add List Item</AlertDialog.Header>
+            <AlertDialog.Body>
+              Enter item name:
+              <Input value={itemname} onChangeText={(text) => { setItemName(text) }} />
+            </AlertDialog.Body>
+            <AlertDialog.Footer>
+              <Button onPress={onClose}>Add</Button>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
+        </AlertDialog>
+      </Center>
     </NativeBaseProvider>
   )
 }
@@ -117,6 +164,8 @@ const ListOfList = (props: navprop) => {
   }]);
 
   const [isopen, setopen] = useState<boolean>(false);
+  const [listNameValue, setListNameVal] = useState<string>('');
+
   const cancelAdd = () => {
     setopen(false);
     setListNameVal('');
@@ -128,7 +177,6 @@ const ListOfList = (props: navprop) => {
 
   const cancelRef = React.useRef(null);
 
-  const [listNameValue, setListNameVal] = useState<string>('');
   const handleChange = (text: any) => setListNameVal(text);
 
   function addList() {
@@ -149,8 +197,6 @@ const ListOfList = (props: navprop) => {
             alignContent="flex-start">
             <VStack>
               <Box w="full" h="10" bg="background.100" />
-              <HStack>
-              </HStack>
 
               <Flex flexDirection="row">
                 <Heading size="3xl" marginLeft="4">Lists</Heading>
