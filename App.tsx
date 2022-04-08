@@ -3,7 +3,7 @@ import { NavigationContainer, RouteProp } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   AlertDialog, Box, Center, extendTheme, Flex, Heading, HStack,
-  IconButton, Input, NativeBaseProvider, Spacer, StatusBar, VStack, Button
+  IconButton, Input, NativeBaseProvider, Spacer, StatusBar, VStack, Button, Checkbox
 } from 'native-base';
 import React, { useState } from 'react';
 import { NavigationScreenProp } from 'react-navigation';
@@ -73,6 +73,8 @@ const ListView = (props: navprop) => {
 
   const [isopen, setopen] = useState<boolean>(false);
 
+  let selectedItem = '';
+
   const cancelAdd = () => {
     setopen(false);
     setItemName('');
@@ -92,6 +94,19 @@ const ListView = (props: navprop) => {
       }]);
       setItemName('');
     }
+  }
+
+  const updateIfChecked = (isSelected: boolean) => {
+    const newlist = itemlist.map((item) => {
+      if (item.name === selectedItem) {
+        return {
+          name: item.name,
+          checked: isSelected
+        }
+      }
+      return item;
+    });
+    setItemList(newlist);
   }
 
   const listName = props.route.params.title;
@@ -118,12 +133,20 @@ const ListView = (props: navprop) => {
           <VStack space="2">
             {itemlist.map((list, index) => {
               return (
-                <HStack key={index}>
-                  <Box w="full" h="8" bg="background.100" alignContent="flex-start"
-                    paddingLeft="2" rounded="lg" marginY="2">
+                <Box w="full" h="8" bg="background.100" alignContent="flex-start"
+                  paddingLeft="2" rounded="lg" marginY="2" key={index}>
+
+                  <Flex flexDirection="row">
                     <Heading>{list.name}</Heading>
-                  </Box>
-                </HStack>
+                    <Spacer />
+                    <Checkbox marginTop="1.5" marginRight="2" value="list-item"
+                      accessibilityLabel={`${list.name} is ${list.checked ? `checked` : `not checked`}`}
+                      onChange={(isSelected) => {
+                        selectedItem = list.name;
+                        updateIfChecked(isSelected);
+                      }} />
+                  </Flex>
+                </Box>
               )
             })}
           </VStack>
