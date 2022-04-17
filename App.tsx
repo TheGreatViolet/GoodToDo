@@ -5,8 +5,9 @@ import {
   AlertDialog, Box, Center, extendTheme, Flex, Heading, HStack,
   IconButton, Input, NativeBaseProvider, Spacer, StatusBar, VStack, Button, Checkbox
 } from 'native-base';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationScreenProp } from 'react-navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Themes = {
   lightDefault: {
@@ -67,13 +68,50 @@ interface navprop {
   route: RouteProp<{ params: { list: any[], title: string } }>;
 }
 
+async function writeData(data: object, listName: string): Promise<void> {
+  AsyncStorage.setItem(listName, JSON.stringify(data));
+
+  AsyncStorage.getItem('listOfLists').then((value: any): any => {
+    const splitdat: any[] = value === null ? [] : value.split(',');
+    if (!splitdat.includes(listName)) {
+      splitdat.push(listName);
+      AsyncStorage.setItem('listOfLists', splitdat.toString());
+    }
+  })
+}
+
+async function getData(): Promise<any[]> {
+  const listOfLists: any[] = await AsyncStorage.getItem('listOfLists')
+    .then((value: any): any[] => {
+      if (!value) { return []; }
+
+      if (value.includes(',')) {
+        return value.split(',');
+      } else {
+        return [value];
+      }
+    });
+
+  if (listOfLists.length === 0) return [];
+
+  let dataArray: any[] = [];
+
+  for (let i = 0; i < listOfLists.length; i++) {
+    const data = await AsyncStorage.getItem(listOfLists[i]);
+
+    if (data) { dataArray.push(JSON.parse(data)); }
+  }
+
+  return dataArray;
+}
+
 const ListView = (props: navprop) => {
   const [itemlist, setItemList] = useState(props.route.params.list);
   const [itemname, setItemName] = useState('');
 
   const [isopen, setopen] = useState<boolean>(false);
 
-  let selectedItem = '';
+  const mutList = React.useRef(itemlist);
 
   const cancelAdd = () => {
     setopen(false);
@@ -88,26 +126,32 @@ const ListView = (props: navprop) => {
 
   function addItem() {
     if (itemname.length > 0) {
-      setItemList([...itemlist, {
+      setItemList([...mutList.current, {
         name: itemname,
         checked: false
       }]);
+
       setItemName('');
     }
   }
 
-  const updateIfChecked = (isSelected: boolean) => {
-    const newlist = itemlist.map((item) => {
-      if (item.name === selectedItem) {
+  function updateIfChecked(isSelected: boolean, itemName: string, itemIndex: number) {
+    setItemList(mutList.current.map((item, index) => {
+      if (index === itemIndex) {
         return {
-          name: item.name,
+          name: itemName,
           checked: isSelected
-        }
+        };
+      } else {
+        return item;
       }
-      return item;
-    });
-    setItemList(newlist);
+    }));
   }
+
+  useEffect(() => {
+    mutList.current = itemlist;
+    writeData({ name: props.route.params.title, items: itemlist }, props.route.params.title)
+  }, [itemlist]);
 
   const listName = props.route.params.title;
 
@@ -122,8 +166,8 @@ const ListView = (props: navprop) => {
             <Flex flexDirection="row">
               <Heading size="3xl" marginLeft="4">{listName}</Heading>
               <Spacer />
-              <IconButton icon={<AntDesign name="plus" size={36} color="gray" />} marginRight="2" marginTop="2"
-                onPress={() => { setopen(true) }} />
+              <IconButton icon={<AntDesign name="plus" size={36} color="gray" />}
+                marginRight="2" marginTop="2" onPress={() => { setopen(true) }} />
             </Flex>
           </VStack>
         </Box>
@@ -132,18 +176,19 @@ const ListView = (props: navprop) => {
           alignContent="flex-start" paddingX="4" marginTop="2">
           <VStack space="2">
             {itemlist.map((list, index) => {
+              const itemName = list.name;
+              const isChecked = list.checked;
               return (
                 <Box w="full" h="8" bg="background.100" alignContent="flex-start"
                   paddingLeft="2" rounded="lg" marginY="2" key={index}>
 
                   <Flex flexDirection="row">
-                    <Heading>{list.name}</Heading>
+                    <Heading>{itemName}</Heading>
                     <Spacer />
-                    <Checkbox marginTop="1.5" marginRight="2" value="list-item"
-                      accessibilityLabel={`${list.name} is ${list.checked ? `checked` : `not checked`}`}
+                    <Checkbox marginTop="1.5" marginRight="2" value="list-item" isChecked={isChecked}
+                      accessibilityLabel={`${itemName} is ${isChecked ? `checked` : `not checked`}`}
                       onChange={(isSelected) => {
-                        selectedItem = list.name;
-                        updateIfChecked(isSelected);
+                        updateIfChecked(isSelected, itemName, index);
                       }} />
                   </Flex>
                 </Box>
@@ -173,20 +218,22 @@ const ListView = (props: navprop) => {
 }
 
 const ListOfList = (props: navprop) => {
-  const [listoflists, setlists] = useState<Array<any> | any>([{
-    name: 'Test Lists',
-    items: [{
-      name: 'Test Item 1',
-      checked: false
-    }]
-  },
-  {
-    name: 'Test List 2',
-    items: [{
-      name: 'Test Item 1',
-      checked: false
-    }]
-  }]);
+  // [{
+  //   name: 'Test Lists',
+  //   items: [{
+  //     name: 'Test Item 1',
+  //     checked: false
+  //   }]
+  // },
+  // {
+  //   name: 'Test List 2',
+  //   items: [{
+  //     name: 'Test Item 1',
+  //     checked: false
+  //   }]
+  // }]
+
+  const [listoflists, setlists] = useState<Array<any> | any>([]);
 
   const [isopen, setopen] = useState<boolean>(false);
   const [listNameValue, setListNameVal] = useState<string>('');
@@ -204,9 +251,19 @@ const ListOfList = (props: navprop) => {
 
   const handleChange = (text: any) => setListNameVal(text);
 
+  useEffect(() => {
+    getData().then((data: any) => {
+      if (data.length > 0) {
+        setlists(data);
+      }
+    });
+  }, [])
+
   function addList() {
     if (listNameValue.length > 0) {
-      setlists([...listoflists, { name: listNameValue, items: [] }]);
+      const datatowrite = { name: listNameValue, items: [] };
+      setlists([...listoflists, datatowrite]);
+      writeData(datatowrite, listNameValue);
       setListNameVal('');
     }
   }
@@ -235,21 +292,23 @@ const ListOfList = (props: navprop) => {
           <Box w="full" h="full" bg="background.200"
             alignContent="flex-start" paddingX="4" marginTop="2">
             <VStack space="2">
-              {listoflists.map((list: any, key: any) => {
-                return (
-                  <HStack key={key} onTouchEnd={() => {
-                    navigation.navigate('ListView', {
-                      list: list.items,
-                      title: list.name
-                    });
-                  }}>
-                    <Box w="full" h="8" bg="background.100" alignContent="flex-start"
-                      paddingLeft="2" rounded="lg" marginY="2">
-                      <Heading>{list.name}</Heading>
-                    </Box>
-                  </HStack>
-                )
-              })}
+              {
+                listoflists.map((list: any, key: any) => {
+                  return (
+                    <HStack key={key} onTouchEnd={() => {
+                      navigation.navigate('ListView', {
+                        list: list.items,
+                        title: list.name,
+                      });
+                    }}>
+                      <Box w="full" h="8" bg="background.100" alignContent="flex-start"
+                        paddingLeft="2" rounded="lg" marginY="2">
+                        <Heading>{list.name}</Heading>
+                      </Box>
+                    </HStack>
+                  )
+                })
+              }
             </VStack>
           </Box>
         </Flex>
