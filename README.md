@@ -1,19 +1,19 @@
 # GoodToDo
 
-## What is this app?
+## About
 
-This is a to-do app I designed in React Native. It's still a work in progress.
+GoodToDo is a basic to-do app that I am working on in my free time.
 
-## Is there an App Store/Google Play Store version/is there an IPA build?
+## Questions
 
-Unfortunately no. I can't publish the app on either store nor can I build an IPA as in order to create
-builds for those versions or to publish them, I would need a developer account which I can't have
-as I am only a minor.
+### Will there be a Google Play Store/Apple App Store release?
 
-## Will there be an App Store/Google Play Store/IPA version soon?
+Not in the near future, as both those require a developer account, which I cannot get because I am a minor.
 
-Most likely no.
+### Will there be an IPA release?
+
+Not in the near future, same reason as last question.
 
 ### What about an APK?
 
-Perhaps.
+I am currently publishing APK releases.
