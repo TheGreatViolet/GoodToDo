@@ -164,7 +164,7 @@ const ListView = (props: navprop) => {
           <VStack >
             <Box w="full" h="10" bg="background.100" />
             <Flex flexDirection="row">
-              <Heading size="3xl" marginLeft="4">{listName}</Heading>
+              <Heading size="3xl" marginLeft="4">{listName.length > 15 ? `${listName.slice(0, 12)}...` : listName}</Heading>
               <Spacer />
               <IconButton icon={<AntDesign name="plus" size={36} color="gray" />}
                 marginRight="2" marginTop="2" onPress={() => { setopen(true) }} />
